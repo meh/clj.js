@@ -17,7 +17,7 @@ Clojure = (function () {
 	}
 
 	function symbol (string) {
-		stirng        = new String(string);
+		string        = new String(string);
 		string.symbol = true;
 
 		return string;
@@ -110,13 +110,7 @@ Clojure = (function () {
 			}) : string) + '"';
 		}
 
-		var c = function (object, options) {
-			this.options = options || {};
-		}
-
-		c.prototype.show = function () {
-			var obj = this.object;
-
+		function stringify (obj, options) {
 			if (obj == null) {
 				return 'nil';
 			}
@@ -129,10 +123,10 @@ Clojure = (function () {
 			
 			if (obj instanceof String) {
 				if (obj.keyword) {
-					return ":" + string;
+					return ":" + obj.toString();
 				}
 				else if (obj.symbol) {
-					return string;
+					return obj.toString();
 				}
 				else {
 					return inspect(obj.toString());
@@ -173,8 +167,8 @@ Clojure = (function () {
 				var result = '';
 
 				for (var key in obj) {
-					if (options.keys_are_keywords && typeof key === 'string' && !key.symbol) {
-						key.keyword = true;
+					if (options.keys_are_keywords && typeof key === 'string') {
+						key = keyword(key);
 					}
 
 					result += stringify(key) + ' ' + stringify(obj[key]) + ' ';
@@ -184,6 +178,16 @@ Clojure = (function () {
 			}
 
 			throw new Error('unknown object');
+		}
+
+
+		var c = function (object, options) {
+			this.options = options || {};
+			this.object  = object;
+		}
+
+		c.prototype.show = function () {
+			return stringify(this.object, this.options);
 		}
 
 		return c;
@@ -435,6 +439,20 @@ Clojure = (function () {
 
 		c.prototype.read_char = function () {
 			return null;
+		}
+
+		c.prototype.read_symbol = function () {
+			var length = 0;
+
+			while (is_symbol(this.after(length))) {
+				length++;
+			}
+
+			var string = this.substr(0, length);
+
+			this.seek(length);
+
+			return symbol(string);
 		}
 
 		c.prototype.read_keyword = function () {
