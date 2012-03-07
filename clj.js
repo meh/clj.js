@@ -24,23 +24,35 @@ Clojure = (function () {
 	}
 
 	function vector (array) {
+		if (arguments.length > 1) {
+			array = Array.prototype.slice.call(arguments);
+		}
+
 		array.vector = true;
 
 		return array;
 	}
 
 	function list (array) {
+		if (arguments.length > 1) {
+			array = Array.prototype.slice.call(arguments);
+		}
+
 		array.list = true;
 
 		return array;
 	}
 
 	function set (array) {
+		if (arguments.length > 1) {
+			array = Array.prototype.slice.call(arguments);
+		}
+
 		for (var i = 0; i < array.length; i++) {
 			var value = array[i];
 
 			for (var j = 0; j < array.length; j++) {
-				if (i !== j && value !== array[j]) {
+				if (i !== j && value === array[j]) {
 					throw new Error("the array contains non unique values");
 				}
 			}
@@ -53,10 +65,10 @@ Clojure = (function () {
 
 	var Rational = function () {
 		var c = function (string) {
-			var matches = string.match(/^(.*?)\/(.*?)$/);
+			var parts = string.split('/');
 
-			this.numerator   = parseInt(matches[1]);
-			this.denominator = parseInt(matches[2]);
+			this.numerator   = parseInt(parts[0]);
+			this.denominator = parseInt(parts[1]);
 		}
 
 		c.prototype.toNumber = function () {
@@ -110,7 +122,12 @@ Clojure = (function () {
 			}) : string) + '"';
 		}
 
-		function stringify (obj, options) {
+		var c = function (object, options) {
+			this.options = options || {};
+			this.object  = object;
+		}
+
+		c.stringify = function (obj, options) {
 			if (obj == null) {
 				return 'nil';
 			}
@@ -142,7 +159,7 @@ Clojure = (function () {
 				var result = '';
 
 				for (var i = 0; i < obj.length; i++) {
-					result += stringify(obj[i]) + ' ';
+					result += c.stringify(obj[i]) + ' ';
 				}
 
 				result = result.substr(0, result.length - 1);
@@ -171,7 +188,7 @@ Clojure = (function () {
 						key = keyword(key);
 					}
 
-					result += stringify(key) + ' ' + stringify(obj[key]) + ' ';
+					result += c.stringify(key) + ' ' + c.stringify(obj[key]) + ' ';
 				}
 
 				return '{' + result.substr(0, result.length - 1) + '}';
@@ -180,14 +197,8 @@ Clojure = (function () {
 			throw new Error('unknown object');
 		}
 
-
-		var c = function (object, options) {
-			this.options = options || {};
-			this.object  = object;
-		}
-
 		c.prototype.show = function () {
-			return stringify(this.object, this.options);
+			return c.stringify(this.object, this.options);
 		}
 
 		return c;
@@ -512,7 +523,17 @@ Clojure = (function () {
 		}
 
 		c.prototype.read_instant = function () {
-			return null;
+			this.seek(1);
+
+			if (!this.after(4)) {
+				throw new Error("unexpected EOF");
+			}
+
+			if (!this.start_with('inst')) {
+				throw new Error('expected inst, got ' + this.substr(0, 4));
+			}
+
+			return rfc3339(this.read_string());
 		}
 
 		c.prototype.read_list = function () {
@@ -609,9 +630,7 @@ Clojure = (function () {
 		Printer: Printer,
 		Reader: Reader,
 
-		stringify: function (obj, options) {
-			return new Printer(obj, options).show();
-		},
+		stringify: Printer.stringify,
 
 		parse: function (obj, options) {
 			return new Reader(obj, options).parse();

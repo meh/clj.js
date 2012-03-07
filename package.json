@@ -1,0 +1,24 @@
+{
+  "name": "clj",
+  "version": "0.0.1",
+  "author": "meh. <meh@paranoici.org> (https://github.com/meh)",
+  "description": "Use Clojure sexps like JSON",
+  "keywords": [
+    "clojure"
+  ],
+  "homepage": "https://github.com/meh/clj.js",
+  "files": [
+    "clj.js"
+  ],
+  "main": "clj.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/meh/clj.js.git"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}
