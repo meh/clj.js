@@ -31,6 +31,7 @@ Printing - `stringify`
 `stringify(object, options)` transforms the passed object to Clojure sexps.
 
 The available options are:
+
 * `keys_are_keywords`, when set to true the keys of objects that are strings will automatically be transformed in keywords.
 
 Reading - `parse`
