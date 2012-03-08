@@ -10,41 +10,41 @@
 
 Clojure = (function () {
 	function keyword (string) {
-		string         = new String(string);
-		string.keyword = true;
+		string      = new String(string);
+		string.type = "keyword";
 
 		return string;
 	}
 
 	function symbol (string) {
-		string        = new String(string);
-		string.symbol = true;
+		string      = new String(string);
+		string.type = "symbol";
 
 		return string;
 	}
 
 	function vector (array) {
-		if (arguments.length > 1) {
+		if (arguments.length != 1 || !(array instanceof Array && !array.type)) {
 			array = Array.prototype.slice.call(arguments);
 		}
 
-		array.vector = true;
+		array.type = "vector";
 
 		return array;
 	}
 
 	function list (array) {
-		if (arguments.length > 1) {
+		if (arguments.length != 1 || !(array instanceof Array && !array.type)) {
 			array = Array.prototype.slice.call(arguments);
 		}
 
-		array.list = true;
+		array.type = "list";
 
 		return array;
 	}
 
 	function set (array) {
-		if (arguments.length > 1) {
+		if (arguments.length != 1 || !(array instanceof Array && !array.type)) {
 			array = Array.prototype.slice.call(arguments);
 		}
 
@@ -53,19 +53,59 @@ Clojure = (function () {
 
 			for (var j = 0; j < array.length; j++) {
 				if (i !== j && value === array[j]) {
-					throw new Error("the array contains non unique values");
+					throw new SyntaxError("the array contains non unique values");
 				}
 			}
 		}
 
-		array.set = true;
+		array.type = "set";
 
 		return array;
 	}
 
-	var Rational = function () {
-		var c = function (string) {
-			var parts = string.split('/');
+	function is_keyword (x) {
+		if (x instanceof String && x.type == "keyword") {
+			return true;
+		}
+
+		return false;
+	}
+
+	function is_symbol (x) {
+		if (x instanceof String && x.type == "symbol") {
+			return true;
+		}
+
+		return false;
+	}
+
+	function is_list (x) {
+		if (x instanceof Array && x.type == "list") {
+			return true;
+		}
+
+		return false;
+	}
+
+	function is_set (x) {
+		if (x instanceof Array && x.type == "set") {
+			return true;
+		}
+
+		return false;
+	}
+
+	function is_vector (x) {
+		if (x instanceof Array && x.type == "vector") {
+			return true;
+		}
+
+		return false;
+	}
+
+	var Rational = (function () {
+		var c = function (string, denominator) {
+			var parts = denominator ? [string, denominator] : string.split('/');
 
 			this.numerator   = parseInt(parts[0]);
 			this.denominator = parseInt(parts[1]);
@@ -75,8 +115,12 @@ Clojure = (function () {
 			return this.numerator / this.denominator;
 		}
 
+		c.prototype.toString = function () {
+			return this.numerator + '/' + this.denominator;
+		}
+
 		return c;
-	}
+	})();
 
 	var Printer = (function () {
 		function rfc3339 (date) {
@@ -128,6 +172,8 @@ Clojure = (function () {
 		}
 
 		c.stringify = function (obj, options) {
+			options = options || {};
+
 			if (obj == null) {
 				return 'nil';
 			}
@@ -139,10 +185,10 @@ Clojure = (function () {
 			}
 			
 			if (obj instanceof String) {
-				if (obj.keyword) {
+				if (is_keyword(obj)) {
 					return ":" + obj.toString();
 				}
-				else if (obj.symbol) {
+				else if (is_symbol(obj)) {
 					return obj.toString();
 				}
 				else {
@@ -164,10 +210,10 @@ Clojure = (function () {
 
 				result = result.substr(0, result.length - 1);
 
-				if (obj.list) {
+				if (is_list(obj)) {
 					return '(' + result + ')';
 				}
-				else if (obj.set) {
+				else if (is_set(obj)) {
 					return '#{' + result + '}';
 				}
 				else {
@@ -179,6 +225,9 @@ Clojure = (function () {
 			}
 			else if (obj instanceof Date) {
 				return '#inst "' + rfc3339(obj) + '"';
+			}
+			else if (obj instanceof Rational) {
+				return obj.toString();
 			}
 			else {
 				var result = '';
@@ -194,7 +243,7 @@ Clojure = (function () {
 				return '{' + result.substr(0, result.length - 1) + '}';
 			}
 
-			throw new Error('unknown object');
+			throw new SyntaxError('unknown object');
 		}
 
 		c.prototype.show = function () {
@@ -256,7 +305,33 @@ Clojure = (function () {
 		}
 
 		function rfc3339 (string) {
+			var result  = new Date();
+			var matches = string.match(/(\d\d\d\d)(-)?(\d\d)(-)?(\d\d)(T)?(\d\d)(:)?(\d\d)(:)?(\d\d)(\.\d+)?(Z|([+-])(\d\d)(:)?(\d\d))/);
+			var offset  = 0;
 
+			result.setUTCDate(1);
+			result.setUTCFullYear(parseInt(matches[1], 10));
+			result.setUTCMonth(parseInt(matches[3], 10) - 1);
+			result.setUTCDate(parseInt(matches[5], 10));
+			result.setUTCHours(parseInt(matches[7], 10));
+			result.setUTCMinutes(parseInt(matches[9], 10));
+			result.setUTCSeconds(parseInt(matches[11], 10));
+
+			if (matches[12]) {
+				result.setUTCMilliseconds(parseFloat(matches[12]) * 1000);
+			}
+			else {
+				result.setUTCMilliseconds(0);
+			}
+
+			if (matches[13] != 'Z') {
+				offset  = (matches[15] * 60) + parseInt(matches[17], 10);
+				offset *= ((matches[14] == '-') ? -1 : 1);
+
+				result.setTime(result.getTime() - offset * 60 * 1000);
+			}
+
+			return result;
 		}
 
 		function is_ignored (ch) {
@@ -359,17 +434,17 @@ Clojure = (function () {
 			this.ignore();
 
 			if (this.eof()) {
-				throw new Error('unexpected EOF');
+				throw new SyntaxError('unexpected EOF');
 			}
 
 			var type   = this.next_type(),
 			    result = this["read_" + type]();
 
-			if ((type === "nil" || type === "boolean") && typeof result === 'string') {
+			if ((type === "nil" || type === "boolean") && result instanceof String) {
 				type = "symbol";
 			}
 
-			if (type !== "map" && type !== "nil") {
+			if (type !== "map" && result != null) {
 				result.type = type;
 			}
 
@@ -526,12 +601,14 @@ Clojure = (function () {
 			this.seek(1);
 
 			if (!this.after(4)) {
-				throw new Error("unexpected EOF");
+				throw new SyntaxError("unexpected EOF");
 			}
 
 			if (!this.start_with('inst')) {
-				throw new Error('expected inst, got ' + this.substr(0, 4));
+				throw new SyntaxError('expected inst, got ' + this.substr(0, 4));
 			}
+
+			this.seek(4); this.ignore();
 
 			return rfc3339(this.read_string());
 		}
@@ -609,7 +686,7 @@ Clojure = (function () {
 			this.ignore();
 
 			if (this.current()) {
-				throw new Error("there is some unconsumed input");
+				throw new SyntaxError("there is some unconsumed input");
 			}
 
 			return result;
@@ -625,7 +702,16 @@ Clojure = (function () {
 		list:    list,
 		set:     set,
 
+		is_keyword: is_keyword,
+		is_symbol:  is_symbol,
+		is_list:    is_list,
+		is_set:     is_set,
+		is_vector:  is_vector,
+
 		Rational: Rational,
+		rational: function (a, b) {
+			return new Rational(a, b);
+		},
 
 		Printer: Printer,
 		Reader: Reader,
