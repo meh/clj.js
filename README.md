@@ -33,6 +33,7 @@ Printing - `stringify`
 The available options are:
 
 * `keys_are_keywords`, when set to true the keys of objects that are strings will automatically be transformed in keywords.
+* `alpha`, when set to true Date objects will be converted to instants.
 
 Reading - `parse`
 -----------------

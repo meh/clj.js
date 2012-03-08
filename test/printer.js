@@ -167,5 +167,28 @@ vows.describe('Clojure Printer').addBatch({
 				assert.equal(topic, '{:a "b"}');
 			}
 		}
+	},
+
+	'when printing dates, ': {
+		'specifically new Date()': {
+			topic: function () {
+				return clj.stringify(new Date());
+			},
+
+			'we get the right epoch': function (topic) {
+				assert.equal(topic, parseInt(new Date().getTime() / 1000).toString());
+			}
+		},
+
+		'specifically new Date() with alpha option': {
+			topic: function () {
+				return clj.stringify(new Date(), { alpha: true });
+			},
+
+			'we get the right instant': function (topic) {
+				assert.include(topic, 'inst');
+				assert.equal(parseInt(clj.parse(topic).getTime() / 1000), parseInt(new Date().getTime() / 1000));
+			}
+		}
 	}
 }).export(module);

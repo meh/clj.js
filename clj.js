@@ -214,7 +214,7 @@ Clojure = (function () {
 				var result = '';
 
 				for (var i = 0; i < obj.length; i++) {
-					result += c.stringify(obj[i]) + ' ';
+					result += c.stringify(obj[i], options) + ' ';
 				}
 
 				result = result.substr(0, result.length - 1);
@@ -233,7 +233,12 @@ Clojure = (function () {
 				return '#"' + obj.toString().substr(1).replace(/\/\w*$/, '') + '"';
 			}
 			else if (obj instanceof Date) {
-				return '#inst "' + rfc3339(obj) + '"';
+				if (options.alpha) {
+					return '#inst "' + rfc3339(obj) + '"';
+				}
+				else {
+					return parseInt(obj.getTime() / 1000).toString();
+				}
 			}
 			else if (is_rational(obj)) {
 				return obj.toString();
@@ -246,7 +251,7 @@ Clojure = (function () {
 						key = keyword(key);
 					}
 
-					result += c.stringify(key) + ' ' + c.stringify(obj[key]) + ' ';
+					result += c.stringify(key, options) + ' ' + c.stringify(obj[key], options) + ' ';
 				}
 
 				return '{' + result.substr(0, result.length - 1) + '}';
