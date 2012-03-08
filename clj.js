@@ -111,9 +111,10 @@ Clojure = (function () {
 			this.denominator = parseInt(parts[1]);
 		}
 
-		c.prototype.toNumber = function () {
+		c.prototype.valueOf = c.prototype.toNumber = function () {
 			return this.numerator / this.denominator;
 		}
+
 
 		c.prototype.toString = function () {
 			return this.numerator + '/' + this.denominator;
@@ -121,6 +122,14 @@ Clojure = (function () {
 
 		return c;
 	})();
+
+	function rational (numerator, denominator) {
+		return new Rational(numerator, denominator);
+	}
+
+	function is_rational (x) {
+		return x instanceof Rational;
+	}
 
 	var Printer = (function () {
 		function rfc3339 (date) {
@@ -226,7 +235,7 @@ Clojure = (function () {
 			else if (obj instanceof Date) {
 				return '#inst "' + rfc3339(obj) + '"';
 			}
-			else if (obj instanceof Rational) {
+			else if (is_rational(obj)) {
 				return obj.toString();
 			}
 			else {
@@ -506,7 +515,7 @@ Clojure = (function () {
 			this.seek(length);
 
 			if (string.indexOf('/') != -1) {
-				return new Rational(string);
+				return rational(string);
 			}
 			else if (string.indexOf('r') != -1 || string.indexOf('R') != -1) {
 				var parts = string.toLowerCase().split('r')
@@ -696,22 +705,19 @@ Clojure = (function () {
 	})();
 
 	return {
-		keyword: keyword,
-		symbol:  symbol,
-		vector:  vector,
-		list:    list,
-		set:     set,
+		keyword:  keyword,
+		symbol:   symbol,
+		vector:   vector,
+		list:     list,
+		set:      set,
+		rational: rational,
 
-		is_keyword: is_keyword,
-		is_symbol:  is_symbol,
-		is_list:    is_list,
-		is_set:     is_set,
-		is_vector:  is_vector,
-
-		Rational: Rational,
-		rational: function (a, b) {
-			return new Rational(a, b);
-		},
+		is_keyword:  is_keyword,
+		is_symbol:   is_symbol,
+		is_list:     is_list,
+		is_set:      is_set,
+		is_vector:   is_vector,
+		is_rational: is_rational,
 
 		Printer: Printer,
 		Reader: Reader,

@@ -1,6 +1,6 @@
 {
   "name": "clj",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "meh. <meh@paranoici.org> (https://github.com/meh)",
   "description": "Use Clojure sexps like JSON",
   "keywords": [
