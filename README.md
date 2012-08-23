@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/meh/clj.js.png)](http://travis-ci.org/meh/clj.js)
 clj.js - parse/dump Clojure like you'd do with JSON
 ===================================================
 
